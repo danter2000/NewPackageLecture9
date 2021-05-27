@@ -1,0 +1,14 @@
+Package: NewPackageLecture9
+Title: Practice Package for Lecture9 in STAT302
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Dante",
+           family = "Ramirez",
+           role = c("aut", "cre"),
+           email = "danter@uw.edu")
+Description: This is a demo package for learning how to make packages.
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
