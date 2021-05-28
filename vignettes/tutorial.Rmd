@@ -1,0 +1,20 @@
+---
+title: "Project 3: NewPackageLecture9 Tutorial"
+author: "Dante Ramirez"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{NewPackageLecture9 Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(NewPackageLecture9)
+```
