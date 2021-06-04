@@ -24,4 +24,5 @@ Imports:
     dplyr,
     class,
     magrittr,
-    randomForest
+    randomForest,
+    tibble
