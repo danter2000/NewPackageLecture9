@@ -16,5 +16,205 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
+# Loads packages and data frames from NewPackageLecture9
 library(NewPackageLecture9)
+library(dplyr)
+library(ggplot2)
+data("my_gapminder")
+data("my_penguins")
+```
+
+To view the vignette, run lines 26 and 27 in console, then follow the following
+comments from lines 34 and 36 in the Vignette Install code chunk.
+Package "NewPackageLecture9" imports six mathematical functions and two
+supplementary data sets to use in those functions. 
+
+```{r Vignette Install, eval = FALSE}
+
+# Package instal instructions
+devtools::install_github("danter2000/NewPackageLecture9", 
+                         build_vignette = TRUE, 
+                         build_opts = c())
+# Calls the package
+library(NewPackageLecture9)
+
+# Use this to view the vignette in the Demo HTML help
+help(package = "NewPackageLecture9", help_type = "html")
+# Use this to view the vignette as an isolated HTML file
+utils::browseVignettes(package = "NewPackageLecture9")
+
+```
+
+NewPackageLecture9 includes a t-test function named my_t.test. It can preform
+left, right, and two sided hypothesis tests. Here we will preform all three
+tests on a single column of data from the data frame my_gapminder with a null 
+hypothesis equal to 60.
+
+We will be creating a vector of the lifeExp observations called life_expectancy
+and using this vector in all three tests.
+
+```{r t_test data extraction}
+
+# From my_gapminder, pull and store the lifeExp column as a vector of numerics
+life_expectancy <- my_gapminder %>% pull(lifeExp)
+
+```
+
+Two sided test using NewPackageLecture9's my_t.test.
+
+The p-value is .0932 for this two sided test, meaning that we fail to reject the 
+null hypothesis of Ho = 60, and say there is not enough evidence to conclude
+that the life expectancy 
+
+```{r two sided test}
+
+# Two sided t.test with input vector of life expentancy and mu of 60
+my_t.test(life_expectancy, alternative = "two.sided", mu = 60)
+
+```
+
+```{r left sided test}
+
+# Left sided t.test with input vector of life expectancy and mu of 60
+my_t.test(life_expectancy, "less", 60)
+
+```
+
+```{r right sided test}
+
+# Right sided t.test with input vector of life expectancy and mu of 60
+my_t.test(life_expectancy, "greater", 60)
+
+```
+
+```{r linear model}
+
+# Output predictive measures from my_lm of life expectancy from gdpPercap and continent
+output <- my_lm(lifeExp ~ gdpPercap + continent, data = my_gapminder)
+
+# Matrix of estimates from my_lm
+beta <- output[,"Estimates"]
+
+# Matrix that configures life expectancy from gdpPercap and continent
+X <- model.matrix(lifeExp ~ gdpPercap + continent, my_gapminder)
+
+# Fitted life expectancy values based on my_lm predictive model
+fitted <- X %*% beta
+
+# Data frame of fitted life expectancy, predicted life expectancy and corresponding continents.
+tmp <- data.frame("Fitted" = fitted,  
+                  "Actual" = my_gapminder$lifeExp, 
+                  "Continent" = my_gapminder$continent)
+
+
+# Plot from tmp, x = actual life expectancy, y = predicted life expectancy based on my_lm 
+ggplot(data = tmp, mapping = aes(x = Actual, y = Fitted, color = Continent)) + 
+  
+  # Scatter plot
+  geom_point()
+
+```
+
+```{r k-nearest neighbors}
+
+# Gets rid of NA values from penguins data
+my_penguins <- na.omit(my_penguins)
+
+# Creates data frame of just numeric values
+pen_num <- my_penguins %>% select(bill_length_mm, 
+                                  bill_depth_mm, 
+                                  flipper_length_mm,
+                                  body_mass_g)
+
+# Creates vector of the species classifications
+pen_cl <- my_penguins %>% pull(species)
+
+# Makes vector of strings of those classes
+pen_cl <- as.character(pen_cl)
+
+# Initiallizes empty vector for cv error
+cv_err <- rep(NA, 10)
+
+# Initializes empty vector for training error
+train_err <- rep(NA, 10)
+
+# For the ith element in the vector from 1 to 10
+for (i in 1:10) {
+  
+  # The output of my_knn_cv is repeated 10 times through the ith element
+  output <- my_knn_cv(pen_num, pen_cl, i, 5)
+
+  # cv error for the ith element is the cv error portion of the given output
+  cv_err[i] <- (output$Error)
+  
+  # Training error is boolean of elements that equal actual pen_cl class compared to output class
+  train_err[i] <- mean(pen_cl != output$class)
+
+  
+}
+
+# The error table is a data frame of 10 of each type of error
+err_table <- (data.frame(cv_err, train_err))
+
+# Call the data frame table
+err_table
+
+```
+
+```{r k-random forest}
+
+# Intializes empty matrix with 90 rows and 2 columns
+cv_est_matr <- matrix(NA, nrow = 90, ncol = 2)
+
+# Initializes vector where 2 repeates 30 times, then 5, 30 times, etc
+evals <- rep(c(2,5,10), each = 30)
+
+# For the jth element in the vector from 1 to 90
+for (j in 1:90) {
+  
+  # The 1st column is the cv error for the jth element in the evals vector
+  cv_est_matr[j, 1] <- my_rf_cv(evals[j])$Error
+  
+  # The 2nd column is the eval vector value that corresponds to that cv error
+  cv_est_matr[j, 2] <- evals[j]
+  
+  }
+
+# Converts 90X2 matrix to data frame
+cv_est_frame <- as.data.frame(cv_est_matr)
+
+# Creates 2X3 data frame with summary statistics grouped on eval vector value
+cv_est_frame_1 <- cv_est_frame %>% 
+                  group_by(V2) %>% 
+                  summarise(group_mean = mean(V1), 
+                            group_sd = sd(V1))
+
+# Calls data frame
+cv_est_frame_1
+
+# Splits based on eval vector value
+cv_est_frame$V2 <- factor(cv_est_frame$V2)
+
+# Makes plot from cv_est_frame data, groups on the x axis, cv error on y axis
+ggplot(data = cv_est_frame, mapping = aes(x = V2, y = V1)) + 
+  
+  # creates three box plots
+  geom_boxplot() +
+  
+  # add labels
+  labs(title = "CV Error by number of folds",
+       x = "Number of folds",
+       y = "CV error") +
+  
+  # Centers and bolds title
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+
+
+#read_csv() read data
+#source() read code
+#save/saveRDS
+#ggsave
+
+
 ```

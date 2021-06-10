@@ -48,7 +48,7 @@ my_t.test <- function(x, alternative, mu) {
 
     alternative = "two.sided"
 
-    p_val = pt(test_stat, deg_free, lower.tail = FALSE) * 2
+    p_val = pt(test_stat, deg_free, lower.tail = TRUE) * 2
 
   }
 
