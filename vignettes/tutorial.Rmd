@@ -220,9 +220,10 @@ I would choose that k value as the model based purely on minimizing those
 errors. However, in practice choosing such a low k value will produce a very 
 overfit model, albeit a very low-bias model, but it is still not flexible enough
 of a model to give us any meaningful predictive value once we use test error. In 
-practice, we generally want to use a k neighbor value of 5 or 10 which provide
-the best of both world in minimizing both bias, variance, and usually test 
-error. 
+practice, we want to use the cv_error because the training error is error 
+produced from the same data we used to train the model in the first place. It 
+would not make sense to use the ungeneralizable training error in practice
+with new test data.
 
 Cross validation splits data into parts, using all but one of those parts 
 as "training data" to predict a fit the single part which we refer to as 

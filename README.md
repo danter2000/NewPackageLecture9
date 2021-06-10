@@ -3,6 +3,7 @@
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/danter2000/NewPackageLecture9/workflows/R-CMD-check/badge.svg)](https://github.com/danter2000/NewPackageLecture9/actions)
+[![codecov](https://codecov.io/gh/danter2000/NewPackageLecture9/branch/master/graph/badge.svg)](https://codecov.io/gh/danter2000/NewPackageLecture9)
 <!-- badges: end -->
 
 The goal of NewPackageLecture9 is to ...
