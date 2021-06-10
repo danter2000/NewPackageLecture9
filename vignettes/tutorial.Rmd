@@ -62,10 +62,6 @@ life_expectancy <- my_gapminder %>% pull(lifeExp)
 
 Two sided test using NewPackageLecture9's my_t.test.
 
-The p-value is .0932 for this two sided test, meaning that we fail to reject the 
-null hypothesis of Ho = 60, and say there is not enough evidence to conclude
-that the life expectancy 
-
 ```{r two sided test}
 
 # Two sided t.test with input vector of life expentancy and mu of 60
@@ -73,12 +69,25 @@ my_t.test(life_expectancy, alternative = "two.sided", mu = 60)
 
 ```
 
+Since the p-value of .0932 for this two sided test is above our predetermined 
+alpha of .05, we fail to reject the null hypothesis of Ho = 60, and say there is 
+not enough evidence to conclude that the mean life expectancy from our data is
+statistically different from 60 years old.
+
+Left sided test using NewPackageLecture9's my_t.test.
+
 ```{r left sided test}
 
 # Left sided t.test with input vector of life expectancy and mu of 60
 my_t.test(life_expectancy, "less", 60)
 
 ```
+Since the p-value of .0466 for this left sided test is slightly below our
+predetermined  alpha of .05, we reject the null hypothesis of Ho = 60, and say
+there is evidence to conclude that the mean life expectancy from our data is 
+statistically less than 60 years old.
+
+Right sided test using NewPackageLecture9's my_t.test.
 
 ```{r right sided test}
 
@@ -86,6 +95,16 @@ my_t.test(life_expectancy, "less", 60)
 my_t.test(life_expectancy, "greater", 60)
 
 ```
+
+Since the p-value of .9533 for this right sided test is vastly above our
+predetermined  alpha of .05, we fail to reject the null hypothesis of Ho = 60,
+and say there is no evidence to conclude that the mean life expectancy from our
+data is statistically greater than 60 years old.
+
+
+This code chunk demonstrates the linear model function my_lm on data from 
+my_gapminder. We will be creating a linear model using lifeExp as our response
+variable, and gdpPercap and continent as our explanatory variables. 
 
 ```{r linear model}
 
@@ -106,14 +125,49 @@ tmp <- data.frame("Fitted" = fitted,
                   "Actual" = my_gapminder$lifeExp, 
                   "Continent" = my_gapminder$continent)
 
+# Calls the linear model
+output
+
 
 # Plot from tmp, x = actual life expectancy, y = predicted life expectancy based on my_lm 
 ggplot(data = tmp, mapping = aes(x = Actual, y = Fitted, color = Continent)) + 
   
   # Scatter plot
-  geom_point()
+  geom_point() +
+  
+  # add labels
+  labs(title = "Life expectancy for different countries",
+       x = "Actual life expectancy (years)",
+       y = "Predicted life expectancy (years)") +
+  
+  # Centers and bolds title
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
 
 ```
+
+The p value for gdpPercap is to the negaitve 73rd power, meaning it is very 
+small compared to any reasonable alpha level. This means that we would reject a 
+null hypothesis and say gdpPercap is very associated with life expectancy.
+
+Our gdpPercap coefficient is a numeric variable coefficient which represents the 
+impact gpd per capita has on predicted life expectancy. From this model if we
+hold the impact of country constant, we see for every 1 currency unit increase 
+of gdpPercap, there is a corresponding increase in life expectancy of 
+approximately .000445 years. This would indicate it takes a high gdpPercap value
+to have a noticable difference on life expectancy. 
+
+This plot shows that Africa has the least variation in predicted life expectancy
+among the different countries, while every other continent has increasing 
+variation in predicted life expectancy, especially as actual life expectancy
+increases. The predicted life expectancy years for Europe and Oceania seem to be
+very similar to the actual life expectancy years as measured in my_gapminder. I 
+would say the model fit is very accurate for Europe and Oceania, and least 
+accurate for Africa and the lower actual life expectancy countries in Asia and
+the Americas.
+
+
+This code chunk uses k nearest neighbors prediction on data from my_penguins.
 
 ```{r k-nearest neighbors}
 
@@ -161,12 +215,31 @@ err_table
 
 ```
 
+For both the cv error and training error I noticed it is minimized at k = 1, so
+I would choose that k value as the model based purely on minimizing those 
+errors. However, in practice choosing such a low k value will produce a very 
+overfit model, albeit a very low-bias model, but it is still not flexible enough
+of a model to give us any meaningful predictive value once we use test error. In 
+practice, we generally want to use a k neighbor value of 5 or 10 which provide
+the best of both world in minimizing both bias, variance, and usually test 
+error. 
+
+Cross validation splits data into parts, using all but one of those parts 
+as "training data" to predict a fit the single part which we refer to as 
+"testing data". We alternate which parts we will use as training data and which
+parts we will use as testing data until all parts are either one or the other, 
+and this helps us predict future data that was not initially used to train our 
+model.
+
+
+This code chunk uses random forest prediction on data from my_penguins.
+
 ```{r k-random forest}
 
 # Intializes empty matrix with 90 rows and 2 columns
 cv_est_matr <- matrix(NA, nrow = 90, ncol = 2)
 
-# Initializes vector where 2 repeates 30 times, then 5, 30 times, etc
+# Initializes vector where 2 repeats 30 times, then 5, 30 times, etc
 evals <- rep(c(2,5,10), each = 30)
 
 # For the jth element in the vector from 1 to 90
@@ -183,20 +256,26 @@ for (j in 1:90) {
 # Converts 90X2 matrix to data frame
 cv_est_frame <- as.data.frame(cv_est_matr)
 
+# Renames the first column of the data frame
+colnames(cv_est_frame)[1] <- "CV_error"
+
+# Renames the second column of the data frame
+colnames(cv_est_frame)[2] <- "Num_folds"
+
 # Creates 2X3 data frame with summary statistics grouped on eval vector value
 cv_est_frame_1 <- cv_est_frame %>% 
-                  group_by(V2) %>% 
-                  summarise(group_mean = mean(V1), 
-                            group_sd = sd(V1))
+                  group_by(Num_folds) %>% 
+                  summarise(cv_mean = mean(CV_error), 
+                            cv_sd = sd(CV_error))
 
 # Calls data frame
 cv_est_frame_1
 
 # Splits based on eval vector value
-cv_est_frame$V2 <- factor(cv_est_frame$V2)
+cv_est_frame$Num_folds <- factor(cv_est_frame$Num_folds)
 
 # Makes plot from cv_est_frame data, groups on the x axis, cv error on y axis
-ggplot(data = cv_est_frame, mapping = aes(x = V2, y = V1)) + 
+ggplot(data = cv_est_frame, mapping = aes(x = Num_folds, y = CV_error)) + 
   
   # creates three box plots
   geom_boxplot() +
@@ -218,3 +297,13 @@ ggplot(data = cv_est_frame, mapping = aes(x = V2, y = V1)) +
 
 
 ```
+
+It appears as the number of folds we have increases, then the grouped mean and 
+standard deviations for the MSE errors across all our folds decreases. We should
+expect this, because we are dividing our MSE error over more folds, making the 
+CV error lower as we increase the number of folds. This may indicate that the 
+best model for prediction may have a high value of k.
+
+Our boxplots show a trends that as the number of folds increases, then the CV 
+error decreases, and similarly, the IQR, range, and overall variance of the 
+boxes decreases substantially as well as k increases.
